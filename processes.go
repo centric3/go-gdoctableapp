@@ -113,17 +113,14 @@ func (o *obj) deleteTable() error {
 
 // deleteRowsColumns : Delete rows and columns of a table.
 func (o *obj) deleteRowsColumns() error {
-	if len(o.params.DeleteRowsColumnsRequest.Rows) == 0 && len(o.params.DeleteRowsColumnsRequest.Columns) == 0 {
+	if len(o.params.DeleteRowsColumnsRequest.Rows) == 0 {
 		return fmt.Errorf("No parameters for using DeleteRowsAndColumns()")
 	}
 	rows := o.params.DeleteRowsColumnsRequest.Rows
-	cols := o.params.DeleteRowsColumnsRequest.Columns
 	sort.Slice(rows, func(i, j int) bool { return rows[i] > rows[j] })
-	sort.Slice(cols, func(i, j int) bool { return cols[i] > cols[j] })
 	maxDeleteRow := rows[0]
-	maxDeleteCol := cols[0]
 	table := o.docTable.Table
-	if table.Rows < maxDeleteRow || table.Columns < maxDeleteCol {
+	if table.Rows < maxDeleteRow {
 		return fmt.Errorf("Rows and columns for deleting are outside of the table")
 	}
 	inputObj := o.params.DeleteRowsColumnsRequest
@@ -143,19 +140,7 @@ func (o *obj) deleteRowsColumns() error {
 			br.Requests = append(br.Requests, dr)
 		}
 	}
-	if len(inputObj.Columns) > 0 {
-		for _, e := range inputObj.Columns {
-			tc := &docs.TableCellLocation{}
-			tc.TableStartLocation = l
-			tc.ColumnIndex = e
-			r := &docs.DeleteTableColumnRequest{}
-			r.TableCellLocation = tc
-			dr := &docs.Request{
-				DeleteTableColumn: r,
-			}
-			br.Requests = append(br.Requests, dr)
-		}
-	}
+
 	o.requestBody = br
 	if err := o.documentbatchUpdate(); err != nil {
 		return err
